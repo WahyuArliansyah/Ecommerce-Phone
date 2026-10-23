@@ -1,13 +1,25 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
 import { ResultSetHeader, RowDataPacket } from 'mysql2';
+import path from 'path';
+import fs from 'fs';
 import { pool } from '../config/db';
 import { findBestDiscount } from '../services/discount.service';
 import { addressSchema } from '../utils/validators';
 
 const checkoutSchema = z.object({
     shipping_address: addressSchema.optional(),
+    payment_method: z.enum(['cod', 'transfer'], {
+        // issue.input === undefined artinya field tidak dikirim sama sekali
+        error: (issue) =>
+            issue.input === undefined
+                ? 'Metode pembayaran wajib dipilih'
+                : 'Metode pembayaran harus cod atau transfer'
+    }),
 });
+
+// Nomor rekening toko yang ditampilkan ke user
+export const STORE_BANK_ACCOUNT = '1122140037 BCA';
 
 class CheckoutError extends Error { }
 
@@ -37,6 +49,8 @@ export async function checkout(req: Request, res: Response) {
         await conn.beginTransaction();
 
         const [items] = await conn.query<RowDataPacket[]>(
+            //  FOR UPDATE Mengunci varian transaksi yang berjalan 
+            // Jika User A sedang checkout product X, maka user user B tidak bisa checkout product X juga
             `SELECT c.variant_id, c.quantity, v.price, v.stock, v.storage, v.color,
               p.name AS product_name, p.is_active
        FROM cart_items c
@@ -67,10 +81,12 @@ export async function checkout(req: Request, res: Response) {
         const discount = await findBestDiscount(subtotal);
         const total = subtotal - discount.amount;
 
+        const paymentMethod = parsed.data.payment_method;
+
         const [orderResult] = await conn.query<ResultSetHeader>(
-            `INSERT INTO orders (user_id, discount_rule_id, subtotal, discount_amount, total, shipping_address)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-            [userId, discount.ruleId, subtotal, discount.amount, total, address]
+            `INSERT INTO orders (user_id, discount_rule_id, subtotal, discount_amount, total, shipping_address, payment_method)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            [userId, discount.ruleId, subtotal, discount.amount, total, address, paymentMethod]
         );
         const orderId = orderResult.insertId;
 
@@ -94,33 +110,94 @@ export async function checkout(req: Request, res: Response) {
 
         await conn.query('DELETE FROM cart_items WHERE user_id = ?', [userId]);
 
+        // jika semua berhasil disimpan permanen
         await conn.commit();
-        res.status(201).json({
+
+        const response: Record<string, unknown> = {
             id: orderId,
             subtotal,
             discount_name: discount.name,
             discount_amount: discount.amount,
             total,
             status: 'pending',
-        });
+            payment_method: paymentMethod,
+        };
+
+        // Jika transfer, sertakan nomor rekening toko
+        if (paymentMethod === 'transfer') {
+            response.bank_account = STORE_BANK_ACCOUNT;
+            response.note = 'Silakan transfer ke rekening di atas, lalu upload bukti pembayaran.';
+        }
+
+        res.status(201).json(response);
     } catch (err) {
+        // membatalkan semuanya jika ada yang gagal
         await conn.rollback();
         if (err instanceof CheckoutError) {
             return res.status(400).json({ message: err.message });
         }
         throw err;
     } finally {
+        // kembalikan koneksi ke pool
         conn.release();
     }
 }
 
 export async function getMyOrders(req: Request, res: Response) {
     const [rows] = await pool.query<RowDataPacket[]>(
-        `SELECT id, subtotal, discount_amount, total, status, created_at
-     FROM orders WHERE user_id = ? ORDER BY created_at DESC, id DESC`,
+        `SELECT id, subtotal, discount_amount, total, status,
+                payment_method, payment_proof, created_at
+         FROM orders WHERE user_id = ? ORDER BY created_at DESC, id DESC`,
         [req.user!.id]
     );
     res.json(rows);
+}
+
+// Customer upload bukti pembayaran untuk pesanan transfer miliknya
+export async function uploadProof(req: Request, res: Response) {
+    const orderId = Number(req.params.id);
+    const userId = req.user!.id;
+
+    // Cek pesanan ada, milik user, dan metodanya transfer
+    const [rows] = await pool.query<RowDataPacket[]>(
+        'SELECT id, user_id, payment_method, status, payment_proof FROM orders WHERE id = ?',
+        [orderId]
+    );
+    const order = rows[0];
+
+    if (!order || order.user_id !== userId) {
+        // Hapus file yang sudah terupload kalau pesanan tidak valid
+        if (req.file) fs.unlinkSync(req.file.path);
+        return res.status(404).json({ message: 'Pesanan tidak ditemukan' });
+    }
+    if (order.payment_method !== 'transfer') {
+        if (req.file) fs.unlinkSync(req.file.path);
+        return res.status(400).json({ message: 'Pesanan ini menggunakan metode COD, tidak perlu bukti pembayaran' });
+    }
+    if (order.status !== 'pending') {
+        if (req.file) fs.unlinkSync(req.file.path);
+        return res.status(400).json({ message: 'Bukti hanya bisa diupload saat pesanan berstatus pending' });
+    }
+    if (!req.file) {
+        return res.status(400).json({ message: 'File bukti pembayaran wajib diunggah' });
+    }
+
+    // Hapus file lama jika sudah pernah upload sebelumnya
+    if (order.payment_proof) {
+        const oldPath = path.join(process.cwd(), 'uploads', 'payment_proofs', order.payment_proof);
+        if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+    }
+
+    const filename = req.file.filename;
+    await pool.query(
+        'UPDATE orders SET payment_proof = ? WHERE id = ?',
+        [filename, orderId]
+    );
+
+    res.json({
+        message: 'Bukti pembayaran berhasil diupload',
+        payment_proof: filename,
+    });
 }
 
 export async function getOrderById(req: Request, res: Response) {
@@ -128,10 +205,11 @@ export async function getOrderById(req: Request, res: Response) {
 
     const [orders] = await pool.query<RowDataPacket[]>(
         `SELECT o.id, o.user_id, o.subtotal, o.discount_amount, o.total, o.status,
-            o.shipping_address, o.created_at, d.name AS discount_name
-     FROM orders o
-     LEFT JOIN discount_rules d ON d.id = o.discount_rule_id
-     WHERE o.id = ?`,
+                o.shipping_address, o.payment_method, o.payment_proof, o.created_at,
+                d.name AS discount_name
+         FROM orders o
+         LEFT JOIN discount_rules d ON d.id = o.discount_rule_id
+         WHERE o.id = ?`,
         [orderId]
     );
 
@@ -146,8 +224,12 @@ export async function getOrderById(req: Request, res: Response) {
         [orderId]
     );
 
-    res.json({ ...order, items });
+    // Jika metode transfer, sertakan nomor rekening toko
+    const extra = order.payment_method === 'transfer'
+        ? { bank_account: STORE_BANK_ACCOUNT }
+        : {};
 
+    res.json({ ...order, ...extra, items });
 }
 
 // ====== MANAJEMEN STATUS PESANAN ======

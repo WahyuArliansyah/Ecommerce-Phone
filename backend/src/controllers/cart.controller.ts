@@ -47,6 +47,7 @@ export async function addToCart(req: Request, res: Response) {
   const userId = req.user!.id;
 
   const [variants] = await pool.query<RowDataPacket[]>(
+    // 1. Cek varian ada, produknya aktif, dan ambil stoknya
     `SELECT v.stock FROM product_variants v
      JOIN products p ON p.id = v.product_id
      WHERE v.id = ? AND p.is_active = 1`,
@@ -57,11 +58,14 @@ export async function addToCart(req: Request, res: Response) {
   }
 
   const [existing] = await pool.query<RowDataPacket[]>(
+    // 2. Cek apakah varian ini sudah ada di keranjang user, dan berapa jumlahnya
     'SELECT quantity FROM cart_items WHERE user_id = ? AND variant_id = ?',
     [userId, variant_id]
   );
+  // 3. Hitung jumlah baru = jumlah lama + jumlah yang ditambahkan
   const newQty = (existing[0]?.quantity ?? 0) + quantity;
 
+  // 4. Cek apakah jumlah baru melebihi stok
   if (newQty > variants[0].stock) {
     return res
       .status(400)
@@ -69,6 +73,7 @@ export async function addToCart(req: Request, res: Response) {
   }
 
   await pool.query(
+    // 5. Simpan ke keranjang. Jika sudah ada, update jumlahnya.
     `INSERT INTO cart_items (user_id, variant_id, quantity) VALUES (?, ?, ?)
      ON DUPLICATE KEY UPDATE quantity = ?`,
     [userId, variant_id, newQty, newQty]

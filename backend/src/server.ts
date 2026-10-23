@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import path from 'path';
 import { pool } from './config/db';
 import 'dotenv/config'
 import authRoutes from './routes/auth.routes';
@@ -13,6 +14,10 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+
+// Melayani file bukti pembayaran secara publik
+// Akses via: GET /uploads/payment_proofs/<filename>
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/brands', brandRoutes);
