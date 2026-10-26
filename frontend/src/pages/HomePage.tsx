@@ -165,6 +165,11 @@ export default function HomePage() {
                                         {user.role}
                                     </span>
                                 </div>
+                                {user.role === 'admin' && (
+                                    <Link to="/admin" className="rounded-lg px-2.5 py-1 text-xs font-semibold text-indigo-700 hover:bg-indigo-50 sm:px-3 sm:py-1.5">
+                                        Panel admin
+                                    </Link>
+                                )}
                                 <button
                                     onClick={logout}
                                     className="rounded-lg border border-rose-200 bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-600 transition-colors hover:bg-rose-100 sm:px-3 sm:py-1.5"
@@ -283,11 +288,10 @@ export default function HomePage() {
                                 key={brand}
                                 type="button"
                                 onClick={() => setSelectedBrand(brand)}
-                                className={`shrink-0 rounded-full px-3.5 py-1 text-xs font-semibold transition-all sm:px-4 sm:py-1.5 ${
-                                    selectedBrand === brand
+                                className={`shrink-0 rounded-full px-3.5 py-1 text-xs font-semibold transition-all sm:px-4 sm:py-1.5 ${selectedBrand === brand
                                         ? 'bg-indigo-600 text-white shadow-xs'
                                         : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-100'
-                                }`}
+                                    }`}
                             >
                                 {brand}
                             </button>
@@ -341,9 +345,8 @@ export default function HomePage() {
                                         {phone.brand}
                                     </span>
                                     <span
-                                        className={`text-[10px] font-medium sm:text-[11px] ${
-                                            (phone.total_stock ?? 0) > 0 ? 'text-emerald-600' : 'text-rose-500'
-                                        }`}
+                                        className={`text-[10px] font-medium sm:text-[11px] ${(phone.total_stock ?? 0) > 0 ? 'text-emerald-600' : 'text-rose-500'
+                                            }`}
                                     >
                                         {(phone.total_stock ?? 0) > 0 ? `Stok: ${phone.total_stock}` : 'Habis'}
                                     </span>

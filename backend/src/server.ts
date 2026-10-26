@@ -9,6 +9,7 @@ import productRoutes from './routes/product.routes';
 import discountRoutes from './routes/discount.routes';
 import cartRoutes from './routes/cart.routes';
 import orderRoutes from './routes/order.routes';
+import uploadRoutes from './routes/upload.routes';
 
 const app = express();
 
@@ -22,6 +23,7 @@ app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 app.use('/api/auth', authRoutes);
 app.use('/api/brands', brandRoutes);
 app.use('/api/products', productRoutes);
+app.use('/api/uploads', uploadRoutes);
 app.use('/api/discounts', discountRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/orders', orderRoutes);

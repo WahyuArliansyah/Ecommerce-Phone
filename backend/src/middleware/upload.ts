@@ -35,3 +35,23 @@ export const uploadPaymentProof = multer({
   fileFilter,
   limits: { fileSize: 5 * 1024 * 1024 }, // maks 5 MB
 }).single('payment_proof');
+
+// Folder khusus gambar produk (dibuat otomatis kalau belum ada)
+const productDir = path.join(process.cwd(), 'uploads', 'products');
+if (!fs.existsSync(productDir)) {
+  fs.mkdirSync(productDir, { recursive: true });
+}
+
+const productStorage = multer.diskStorage({
+  destination: (_req, _file, cb) => cb(null, productDir),
+  filename: (_req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    cb(null, `product-${Date.now()}-${Math.round(Math.random() * 1e6)}${ext}`);
+  },
+});
+
+export const uploadProductImage = multer({
+  storage: productStorage,
+  fileFilter, // filter JPG/PNG/WEBP yang sudah ada di atas, dipakai ulang
+  limits: { fileSize: 2 * 1024 * 1024 }, // maksimal 2 MB
+}).single('image');
