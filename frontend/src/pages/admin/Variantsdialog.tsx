@@ -21,7 +21,7 @@ import {
     rowBtnNormal,
     useShowModal,
 } from './services/Adminui';
-import ConfirmDeleteDialog from '../admin/Confirmdeletedialog ';
+import ConfirmDeleteDialog from './ConfirmDeleteDialog';
 
 /* ---------- Form satu varian (tambah atau ubah) ---------- */
 

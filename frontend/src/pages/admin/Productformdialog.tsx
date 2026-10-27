@@ -5,7 +5,7 @@ import {
   type Brand,
   type ProductFields,
   type VariantFields,
-} from '../admin/services/Adminproducts';
+} from './services/Adminproducts';
 import {
   alertClass,
   btnPrimary,

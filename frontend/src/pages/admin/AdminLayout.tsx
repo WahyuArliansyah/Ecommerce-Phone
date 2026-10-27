@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Link, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import BrandFormDialog from './Brandformdialog';
+import BrandFormDialog from './BrandDormDialog';
 
 /*
   Kerangka (layout) semua halaman admin: navbar di atas + isi halaman di bawahnya.
@@ -11,6 +11,8 @@ export default function AdminLayout() {
     // logout = hapus token & data user. Setelah itu RequireRole otomatis memindahkan ke /login
     const { logout } = useAuth();
     const [brandOpen, setBrandOpen] = useState(false);
+    const { pathname } = useLocation();
+    const onOrders = pathname.startsWith('/admin/orders');
 
     return (
         // Pembungkus seluruh halaman. Font diatur di sini supaya berlaku untuk semua isi di dalamnya
@@ -47,6 +49,15 @@ export default function AdminLayout() {
               cursor-pointer = kursor berubah jadi tangan saat diarahkan ke tombol.
               -mr-3 = menggeser tombol ke kanan agar teksnya sejajar dengan tepi isi halaman */}
                     <div className="-mr-3 flex items-center gap-1">
+                        {/* Pindah antara halaman Pesanan dan Produk (satu tombol agar navbar HP tidak sesak) */}
+                        <Link
+                            to={onOrders ? '/admin/products' : '/admin/orders'}
+                            className="flex h-11 items-center rounded-lg px-3 text-sm font-semibold text-[#3FB6C1] transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[#3FB6C1]/60"
+                        >
+                            {onOrders ? 'Produk' : 'Pesanan'}
+                        </Link>
+
+                        {/* Button Brands */}
                         <button
                             type="button"
                             onClick={() => setBrandOpen(true)}
@@ -54,6 +65,8 @@ export default function AdminLayout() {
                         >
                             Brands
                         </button>
+
+                        {/* Button Keluar */}
                         <button
                             type="button"
                             onClick={logout}

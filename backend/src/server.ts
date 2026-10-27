@@ -22,7 +22,7 @@ app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/brands', brandRoutes);
-app.use('/api/products', productRoutes);
+app.use('/api/products', productRoutes);  //Upload Produk,Brand,Diskon
 app.use('/api/uploads', uploadRoutes);
 app.use('/api/discounts', discountRoutes);
 app.use('/api/cart', cartRoutes);

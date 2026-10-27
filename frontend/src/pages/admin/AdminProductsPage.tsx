@@ -10,9 +10,9 @@ import {
     type VariantFields,
 } from './services/Adminproducts';
 import type { ProductItem } from '../HomePage';
-import ConfirmDeleteDialog from '../admin/Confirmdeletedialog ';
-import ProductFormDialog from '../admin/Productformdialog';
-import VariantsDialog from '../admin/Variantsdialog';
+import ConfirmDeleteDialog from './ConfirmDeleteDialog';
+import ProductFormDialog from './ProductFormDialog';
+import VariantsDialog from './VariantsDialog';
 import {
     alertClass,
     btnPrimary,
@@ -195,7 +195,7 @@ export default function AdminProductsPage() {
                         </p>
                     )}
                 </div>
-                <button type="button" onClick={() => setFormTarget('new')} className={btnPrimary + ' cursor-pointer -mr-3'}>
+                <button type="button" onClick={() => setFormTarget('new')} className={btnPrimary + 'cursor-pointer self-start px-4 sm:-mr-3 sm:self-auto'}>
                     Tambah Produk
                 </button>
             </div>

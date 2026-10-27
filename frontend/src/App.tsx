@@ -6,6 +6,7 @@ import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import AdminLayout from './pages/admin/AdminLayout';
 import AdminProductsPage from './pages/admin/AdminProductsPage';
+import AdminOrdersPage from './pages/admin/AdminOrdersPage';
 
 export default function App() {
   return (
@@ -34,6 +35,7 @@ export default function App() {
           >
             <Route index element={<Navigate to="products" replace />} />
             <Route path="products" element={<AdminProductsPage />} />
+            <Route path="orders" element={<AdminOrdersPage />} />
           </Route>
         </Routes>
       </AuthProvider>
