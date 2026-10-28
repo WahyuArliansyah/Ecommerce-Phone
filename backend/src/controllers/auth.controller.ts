@@ -5,6 +5,8 @@ import { z } from 'zod';
 import { ResultSetHeader, RowDataPacket } from 'mysql2';
 import { pool } from '../config/db';
 import { addressSchema } from '../utils/validators';
+import path from 'path';
+import fs from 'fs';
 
 // Aturan validasi untuk data register. Data dari user diperiksa dulu sebelum disimpan.
 const registerSchema = z.object({
@@ -49,6 +51,16 @@ const profileSchema = z.object({
   address: addressSchema.optional()
 });
 
+const passwordSchema = z
+  .object({
+    current_password: z.string().min(1, 'Password lama wajib diisi'),
+    new_password: registerSchema.shape.password, // aturan sama seperti saat register
+  })
+  .refine((d) => d.current_password !== d.new_password, {
+    message: 'Password baru tidak boleh sama dengan password lama',
+    path: ['new_password'],
+  });
+
 function signToken(id: number, role: string) {
   return jwt.sign({ id, role }, process.env.JWT_SECRET as string, {
     expiresIn: (process.env.JWT_EXPIRES_IN || '1d') as jwt.SignOptions['expiresIn'],
@@ -79,7 +91,7 @@ export async function register(req: Request, res: Response) {
   const token = signToken(result.insertId, 'customer');
   res.status(201).json({
     token,
-    user: { id: result.insertId, name, email, role: 'customer' },
+    user: { id: result.insertId, name, email, role: 'customer', phone: phone ?? null, address: null, avatar: null },
   });
 }
 
@@ -91,7 +103,7 @@ export async function login(req: Request, res: Response) {
   const { email, password } = parsed.data;
 
   const [rows] = await pool.query<RowDataPacket[]>(
-    'SELECT id, name, email, password, role FROM users WHERE email = ?',
+    'SELECT id, name, email, password, role, phone, address, avatar FROM users WHERE email = ?',
     [email]
   );
   const user = rows[0];
@@ -102,13 +114,21 @@ export async function login(req: Request, res: Response) {
   const token = signToken(user.id, user.role);
   res.json({
     token,
-    user: { id: user.id, name: user.name, email: user.email, role: user.role },
+    user: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      phone: user.phone,
+      address: user.address,
+      avatar: user.avatar,
+    },
   });
 }
 
 export async function me(req: Request, res: Response) {
   const [rows] = await pool.query<RowDataPacket[]>(
-    'SELECT id, name, email, phone, address, role FROM users WHERE id = ?',
+    'SELECT id, name, email, phone, address, role, avatar FROM users WHERE id = ?',
     [req.user!.id]
   );
   if (rows.length === 0) {
@@ -131,4 +151,44 @@ export async function updateProfile(req: Request, res: Response) {
     [name, phone ?? null, address ?? null, req.user!.id] // ?? null = kalau kosong, simpan NULL
   );
   res.json({ name, phone: phone ?? null, address: address ?? null });
+}
+
+// Customer mengganti password sendiri. Harus menyertakan password lama.
+export async function changePassword(req: Request, res: Response) {
+  const parsed = passwordSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ message: parsed.error.issues[0].message });
+  }
+  const { current_password, new_password } = parsed.data;
+
+  const [rows] = await pool.query<RowDataPacket[]>('SELECT password FROM users WHERE id = ?', [req.user!.id]);
+  const user = rows[0];
+  // Sengaja 400, bukan 401: 401 bisa membuat frontend mengira token habis lalu logout otomatis
+  if (!user || !(await bcrypt.compare(current_password, user.password))) {
+    return res.status(400).json({ message: 'Password lama salah' });
+  }
+
+  const hashed = await bcrypt.hash(new_password, 10);
+  await pool.query('UPDATE users SET password = ? WHERE id = ?', [hashed, req.user!.id]);
+  res.json({ message: 'Password berhasil diganti' });
+}
+
+// Customer mengunggah foto profil (field form: "avatar")
+export async function uploadAvatar(req: Request, res: Response) {
+  if (!req.file) {
+    return res.status(400).json({ message: 'File foto wajib diisi (JPG, PNG, atau WEBP)' });
+  }
+
+  const [rows] = await pool.query<RowDataPacket[]>('SELECT avatar FROM users WHERE id = ?', [req.user!.id]);
+  const oldAvatar: string | null = rows[0]?.avatar ?? null;
+
+  await pool.query('UPDATE users SET avatar = ? WHERE id = ?', [req.file.filename, req.user!.id]);
+
+  // Hapus foto lama supaya folder tidak menumpuk
+  if (oldAvatar) {
+    const oldPath = path.join(process.cwd(), 'uploads', 'avatars', path.basename(oldAvatar));
+    if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+  }
+
+  res.json({ avatar: req.file.filename });
 }

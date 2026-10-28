@@ -56,7 +56,7 @@ export default function LoginPage() {
       style={{ fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif" }}
     >
       {/* ── Bar atas: tombol kembali + logo. Di desktop menempel di pojok kiri atas panel gelap ── */}
-      <header className="relative z-20 flex items-center gap-3 px-5 pt-4 text-white sm:px-8 lg:absolute lg:left-5 lg:top-10 lg:px-0 lg:pt-0">
+      <header className="login-fade relative z-20 flex items-center gap-3 px-5 pt-4 text-white sm:px-8 lg:absolute lg:left-5 lg:top-10 lg:px-0 lg:pt-0">
         <Link
           to="/"
           aria-label="Kembali ke beranda"
@@ -90,17 +90,19 @@ export default function LoginPage() {
         </div>
       </header>
 
-      {/* ── Panel merek: latar penuh yang di-blur di HP, kolom kiri di desktop ── */}
+      {/* ── Panel Sebelah kiri: latar penuh yang di-blur di HP, kolom kiri di desktop ── */}
       <aside className="absolute inset-0 overflow-hidden text-white lg:relative lg:inset-auto lg:px-12 lg:py-10">
         {/* Hanya di HP: cahaya teal + lapisan gelap tipis supaya kartu form menonjol */}
         <div
           aria-hidden="true"
-          className="absolute inset-0 bg-[radial-gradient(circle_at_50%_35%,rgba(31,154,165,0.28),transparent_65%)] lg:hidden"
+          className="login-settle absolute inset-0 bg-[radial-gradient(circle_at_50%_35%,rgba(31,154,165,0.28),transparent_65%)] lg:hidden"
         />
 
         {/* Isi visual: di HP diberi blur ringan, di desktop tajam */}
         <div aria-hidden="true" className="absolute inset-0 blur-[3px] lg:blur-none">
-          <p className="relative z-10 hidden max-w-[12ch] text-[44px] font-extrabold leading-[1.05] tracking-[-0.035em] lg:mt-[108px] lg:block xl:text-5xl lg:ml-5">
+          <p className="login-slide relative z-10 hidden max-w-[12ch] text-[44px] font-extrabold leading-[1.05] tracking-[-0.035em] lg:mt-[108px] lg:block xl:text-5xl lg:ml-5"
+            style={{ animationDelay: '200ms' }}
+          >
             Temukan ponsel berikutnya.
           </p>
 
@@ -108,7 +110,7 @@ export default function LoginPage() {
           <svg
             viewBox="0 0 240 480"
             fill="none"
-            className="pointer-events-none absolute left-1/2 top-[14%] w-64 -translate-x-1/2 opacity-70 sm:w-72 lg:-bottom-36 lg:left-12 lg:top-auto lg:w-60 lg:translate-x-0 lg:opacity-100"
+            className="login-phone pointer-events-none absolute left-1/2 top-[14%] w-64 -translate-x-1/2 opacity-70 sm:w-72 lg:-bottom-36 lg:left-12 lg:top-auto lg:w-60 lg:translate-x-0 lg:opacity-100"
           >
             <rect x="2" y="2" width="236" height="476" rx="40" stroke="#1F9AA5" strokeWidth="3" />
             <rect x="86" y="16" width="68" height="18" rx="9" fill="#1F9AA5" fillOpacity="0.35" />
@@ -121,16 +123,16 @@ export default function LoginPage() {
         </div>
       </aside>
 
-      {/* ── Sisi form ── */}
+      {/* Dalam Mode HandPhone */}
       <main className="relative z-10 flex flex-1 flex-col px-5 py-8 sm:px-12 lg:bg-[#EEF0EB] lg:px-16 lg:py-10">
         <div className="mx-auto my-auto w-full max-w-[400px]">
           {/* Judul merek: hanya di HP (di desktop sudah ada di panel kiri) */}
-          <p className="mb-5 max-w-[14ch] text-[32px] font-extrabold leading-[1.05] tracking-[-0.035em] text-white lg:hidden">
+          <p className="login-rise mb-5 max-w-[14ch] text-[32px] font-extrabold leading-[1.05] tracking-[-0.035em] text-white lg:hidden">
             Temukan ponsel berikutnya.
           </p>
 
           {/* Kartu form: di HP semi-solid + bayangan, di desktop polos seperti sebelumnya */}
-          <div className="rounded-2xl bg-[#EEF0EB]/95 p-6 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.55)] ring-1 ring-white/20 backdrop-blur-md sm:p-8 lg:rounded-none lg:bg-transparent lg:p-0 lg:shadow-none lg:ring-0 lg:backdrop-blur-none">
+          <div className="login-rise rounded-2xl bg-[#EEF0EB]/95 p-6 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.55)] ring-1 ring-white/20 sm:p-8 lg:rounded-none lg:bg-transparent lg:p-0 lg:shadow-none lg:ring-0">
             <h1 className="text-[28px] font-extrabold leading-tight tracking-[-0.03em] text-[#131820]">
               Masuk ke ArliPhone
             </h1>

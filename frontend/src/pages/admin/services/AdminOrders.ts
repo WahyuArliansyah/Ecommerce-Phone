@@ -38,7 +38,6 @@ export const STATUS_LABEL: Record<OrderStatus, string> = {
     cancelled: 'Dibatalkan',
 };
 
-// Sama dengan allowedTransitions di backend
 export const NEXT_STATUS: Record<OrderStatus, OrderStatus[]> = {
     pending: ['paid', 'cancelled'],
     paid: ['shipped', 'cancelled'],
