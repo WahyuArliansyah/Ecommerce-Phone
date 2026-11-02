@@ -27,6 +27,13 @@ app.use('/api/uploads', uploadRoutes);
 app.use('/api/discounts', discountRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/orders', orderRoutes);
+app.use(
+  '/uploads',
+  express.static(path.join(process.cwd(), 'uploads'), {
+    // Browser dilarang "menebak" tipe file sendiri, jadi gambar tidak pernah dijalankan sebagai skrip/HTML
+    setHeaders: (res) => res.setHeader('X-Content-Type-Options', 'nosniff'),
+  }),
+);
 
 app.get('/api/health', async (_req, res) => {
   try {

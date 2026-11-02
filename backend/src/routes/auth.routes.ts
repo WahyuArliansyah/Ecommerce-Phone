@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { changePassword, login, me, register, updateProfile, uploadAvatar } from '../controllers/auth.controller';
 import { requireAuth } from '../middleware/auth';
-import { handleUpload, uploadAvatarImage } from '../middleware/upload';
+import { handleUpload, uploadAvatarImage, verifyImage } from '../middleware/upload';
 
 const router = Router();
 
@@ -10,6 +10,6 @@ router.post('/login', login);
 router.get('/me', requireAuth, me);
 router.put('/me', requireAuth, updateProfile);
 router.put('/me/password', requireAuth, changePassword);// ganti password
-router.post('/me/avatar', requireAuth, handleUpload(uploadAvatarImage), uploadAvatar); // upload foto profil
+router.post('/me/avatar', requireAuth, handleUpload(uploadAvatarImage), verifyImage, uploadAvatar);
 
 export default router;

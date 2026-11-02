@@ -1,6 +1,6 @@
 // src/routes/upload.routes.ts
 import { Router } from 'express';
-import { uploadProductImage } from '../middleware/upload';   // sesuaikan path
+import { uploadProductImage, verifyImage } from '../middleware/upload';   // sesuaikan path
 import { uploadImage } from '../controllers/upload.controller';
 
 const router = Router();
@@ -18,7 +18,7 @@ router.post(
             }
             next();
         }),
-    uploadImage,
+    verifyImage, uploadImage,
 );
 
 export default router;

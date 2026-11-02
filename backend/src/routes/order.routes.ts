@@ -9,7 +9,7 @@ import {
   uploadProof,
 } from '../controllers/order.controller';
 import { requireAdmin, requireAuth } from '../middleware/auth';
-import { uploadPaymentProof } from '../middleware/upload';
+import { uploadPaymentProof, verifyImage, handleUpload } from '../middleware/upload';
 
 const router = Router();
 
@@ -22,5 +22,6 @@ router.get('/:id', getOrderById);                                   // detail (p
 router.put('/:id/cancel', cancelMyOrder);                           // customer: batalkan pesanan sendiri
 router.put('/:id/status', requireAdmin, updateOrderStatus);         // admin: ubah status
 router.post('/:id/proof', uploadPaymentProof, uploadProof);         // customer: upload bukti transfer
+router.post('/:id/proof', handleUpload(uploadPaymentProof), verifyImage, uploadProof);
 
-export default router;
+export default router;

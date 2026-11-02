@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
+import CartButton from '../components/CartButton';
+import UserMenu from '../components/UserMenu';
 
 // Interface tipe data produk dari backend atau mock data
 export interface ProductItem {
@@ -153,9 +155,16 @@ export default function HomePage() {
                     </Link>
 
                     {/* Area User / Tombol Login */}
+                    {/* Area User / Tombol Login */}
                     <div className="flex items-center gap-2 sm:gap-3">
-                        {user ? (
-                            // Kondisi user sudah login
+                        {user?.role === 'customer' ? (
+                            // Customer sudah login: keranjang + avatar dengan dropdown menu
+                            <>
+                                <CartButton />
+                                <UserMenu />
+                            </>
+                        ) : user ? (
+                            // Admin: tampilan lama dipertahankan (nama, tautan Panel admin, Keluar)
                             <div className="flex items-center gap-2 sm:gap-3">
                                 <div className="text-right">
                                     <p className="max-w-[120px] truncate text-xs font-bold text-slate-900 sm:max-w-none sm:text-sm">
@@ -165,11 +174,9 @@ export default function HomePage() {
                                         {user.role}
                                     </span>
                                 </div>
-                                {user.role === 'admin' && (
-                                    <Link to="/admin" className="rounded-lg px-2.5 py-1 text-xs font-semibold text-indigo-700 hover:bg-indigo-50 sm:px-3 sm:py-1.5">
-                                        Panel admin
-                                    </Link>
-                                )}
+                                <Link to="/admin" className="rounded-lg px-2.5 py-1 text-xs font-semibold text-indigo-700 hover:bg-indigo-50 sm:px-3 sm:py-1.5">
+                                    Panel admin
+                                </Link>
                                 <button
                                     onClick={logout}
                                     className="rounded-lg border border-rose-200 bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-600 transition-colors hover:bg-rose-100 sm:px-3 sm:py-1.5"
@@ -179,7 +186,7 @@ export default function HomePage() {
                                 </button>
                             </div>
                         ) : (
-                            // Tombol Masuk / Login
+                            // Belum login: tombol Masuk (tidak berubah)
                             <Link
                                 to="/login"
                                 className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm shadow-indigo-100 transition-all hover:bg-indigo-700 active:scale-95 sm:rounded-xl sm:px-5 sm:py-2 sm:text-sm"
@@ -289,8 +296,8 @@ export default function HomePage() {
                                 type="button"
                                 onClick={() => setSelectedBrand(brand)}
                                 className={`shrink-0 rounded-full px-3.5 py-1 text-xs font-semibold transition-all sm:px-4 sm:py-1.5 ${selectedBrand === brand
-                                        ? 'bg-indigo-600 text-white shadow-xs'
-                                        : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-100'
+                                    ? 'bg-indigo-600 text-white shadow-xs'
+                                    : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-100'
                                     }`}
                             >
                                 {brand}
