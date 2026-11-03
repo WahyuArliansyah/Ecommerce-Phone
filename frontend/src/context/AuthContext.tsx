@@ -13,6 +13,7 @@ export interface User {
 
 interface AuthContextValue {
   user: User | null;
+  syncing: boolean; // true selama data user masih disinkronkan dari server
   login: (token: string, user: User) => void;
   logout: () => void;
   updateUser: (patch: Partial<User>) => void; // perbarui sebagian data user (mis. setelah edit profil)
@@ -23,6 +24,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 // Baca data user yang tersimpan, supaya tetap login setelah halaman di-refresh
 function readStoredUser(): User | null {
   try {
+    if (!localStorage.getItem('token')) return null; // tanpa token = tidak login
     const raw = localStorage.getItem('user');
     return raw ? (JSON.parse(raw) as User) : null;
   } catch {
@@ -32,11 +34,19 @@ function readStoredUser(): User | null {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(readStoredUser);
+  const [syncing, setSyncing] = useState(() => !!localStorage.getItem('token'));
 
   const login = (token: string, user: User) => {
     localStorage.setItem('token', token);
     localStorage.setItem('user', JSON.stringify(user));
     setUser(user);
+    // Segarkan data lengkap (foto, HP, alamat) dari server tanpa menunggu refresh halaman
+    api
+      .get<User>('/auth/me')
+      .then((res) => updateUser(res.data))
+      .catch(() => {
+        /* pakai data dari respons login */
+      });
   };
 
   const logout = () => {
@@ -69,13 +79,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       })
       .catch(() => {
         /* gagal sinkron tidak perlu logout; pakai data tersimpan */
+      })
+      .finally(() => {
+        if (!ignore) setSyncing(false);
       });
     return () => {
       ignore = true;
     };
   }, [updateUser]);
 
-  return <AuthContext.Provider value={{ user, login, logout, updateUser }}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={{ user, syncing, login, logout, updateUser }}>{children}</AuthContext.Provider>;
 }
 
 // Cara memakainya di halaman mana pun: const { user, login, logout, updateUser } = useAuth();

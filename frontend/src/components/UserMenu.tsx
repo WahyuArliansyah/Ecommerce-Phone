@@ -1,19 +1,50 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { missingFields } from '../utils/profile';
+import { needsPayment, type OrderStatus, type PaymentMethod } from '../utils/orders';
 import UserAvatar from './UserAvatar';
 import ChangePasswordDialog from './ChangePasswordDialog';
+
+interface OrderRow {
+  status: OrderStatus;
+  payment_method: PaymentMethod;
+  payment_proof: string | null;
+}
 
 const itemClass =
   'flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 focus-visible:bg-slate-100 focus-visible:outline-none';
 
 export default function UserMenu() {
-  const { user, logout } = useAuth();
+  const { user, logout, syncing } = useAuth();
   const [open, setOpen] = useState(false);
   const [passwordOpen, setPasswordOpen] = useState(false);
+  const [pendingCount, setPendingCount] = useState(0); // pesanan transfer yang belum ada bukti pembayarannya
   const wrapRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+
+  // Hitung pesanan yang menunggu pembayaran: saat tampil, saat menu dibuka/ditutup,
+  // dan saat ada perubahan pesanan di halaman lain (event "orders:changed")
+  useEffect(() => {
+    let ignore = false;
+    const load = () =>
+      api
+        .get<OrderRow[]>('/orders')
+        .then((res) => {
+          if (!ignore) setPendingCount(res.data.filter(needsPayment).length);
+        })
+        .catch(() => {
+          /* gagal memuat: penanda tidak ditampilkan */
+        });
+
+    load();
+    window.addEventListener('orders:changed', load);
+    return () => {
+      ignore = true;
+      window.removeEventListener('orders:changed', load);
+    };
+  }, [open]);
 
   // Tutup dropdown saat klik di luar atau menekan Esc
   useEffect(() => {
@@ -36,8 +67,11 @@ export default function UserMenu() {
   }, [open]);
 
   if (!user) return null;
+
   const missing = missingFields(user);
-  const incomplete = missing.length > 0;
+  const incomplete = !syncing && missing.length > 0; // jangan tampilkan titik berdasarkan data lama
+  const hasPending = pendingCount > 0;
+  const showDot = incomplete || hasPending;
 
   return (
     <div ref={wrapRef} className="relative">
@@ -51,10 +85,14 @@ export default function UserMenu() {
         className="relative flex h-10 w-10 items-center justify-center rounded-full transition-shadow hover:ring-2 hover:ring-indigo-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
       >
         <UserAvatar user={user} className="h-9 w-9" />
-        {incomplete && (
+        {showDot && (
           <>
             <span aria-hidden="true" className="absolute right-0 top-0 h-3 w-3 rounded-full border-2 border-white bg-rose-500" />
-            <span className="sr-only">Profil belum lengkap</span>
+            <span className="sr-only">
+              {[incomplete && 'Profil belum lengkap', hasPending && 'Ada pesanan menunggu pembayaran']
+                .filter(Boolean)
+                .join('. ')}
+            </span>
           </>
         )}
       </button>
@@ -70,6 +108,18 @@ export default function UserMenu() {
             <p className="truncate text-xs text-slate-500">{user.email}</p>
           </div>
           <div className="my-1 h-px bg-slate-100" />
+
+          <Link to="/orders" role="menuitem" onClick={() => setOpen(false)} className={itemClass}>
+            <span className="flex-1">
+              Pesanan Saya
+              {hasPending && (
+                <span className="block text-xs font-normal text-amber-600">
+                  {pendingCount} pesanan menunggu pembayaran
+                </span>
+              )}
+            </span>
+            {hasPending && <span aria-hidden="true" className="h-2 w-2 shrink-0 rounded-full bg-rose-500" />}
+          </Link>
 
           <Link to="/profile" role="menuitem" onClick={() => setOpen(false)} className={itemClass}>
             <span className="flex-1">

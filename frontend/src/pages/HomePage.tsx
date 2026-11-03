@@ -2,8 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
-import CartButton from '../components/CartButton';
-import UserMenu from '../components/UserMenu';
+import SiteHeader from '../components/SiteHeader';
 
 // Interface tipe data produk dari backend atau mock data
 export interface ProductItem {
@@ -76,7 +75,7 @@ const FALLBACK_PHONES: ProductItem[] = [
 
 export default function HomePage() {
     // 1. Hook auth untuk memeriksa status login pengguna
-    const { user, logout } = useAuth();
+    const { user } = useAuth();
     const navigate = useNavigate();
 
     // 2. State untuk menyimpan data produk, status loading, dan filter brand
@@ -117,9 +116,9 @@ export default function HomePage() {
         }).format(val);
     };
 
-    // 5. ATURAN: Ketika klik lihat detail produk, pengguna langsung diarahkan ke halaman login
-    const handleViewDetail = (_productId: number) => {
-        navigate('/login');
+    // Jika Belum login Move to  halaman login. Sudah login → halaman detail produk.
+    const handleViewDetail = (productId: number) => {
+        navigate(user ? `/products/${productId}` : '/login');
     };
 
     // 6. Filter produk hanya berdasarkan brand yang dipilih
@@ -132,74 +131,8 @@ export default function HomePage() {
 
     return (
         <div className="min-h-screen bg-slate-50 text-slate-800">
-            {/* ===================== NAVBAR ATAS (RESPONSIVE) ===================== */}
-            <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 shadow-xs backdrop-blur-md">
-                <div className="mx-auto flex max-w-7xl items-center justify-between px-3 py-2.5 sm:px-6 sm:py-3.5">
-                    {/* Logo & Branding Toko */}
-                    <Link to="/" className="flex items-center gap-2">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-md shadow-indigo-100 sm:h-10 sm:w-10">
-                            {/* Icon Smartphone SVG */}
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                <rect x="5" y="2" width="14" height="20" rx="3" ry="3" />
-                                <line x1="12" y1="18" x2="12.01" y2="18" strokeWidth={3} strokeLinecap="round" />
-                            </svg>
-                        </div>
-                        <div>
-                            <span className="text-lg font-black tracking-tight text-slate-900 sm:text-xl">
-                                Arli<span className="text-indigo-600">Phone</span>
-                            </span>
-                            <span className="hidden text-[10px] font-semibold tracking-wider text-slate-500 uppercase sm:block">
-                                Official Phone Store
-                            </span>
-                        </div>
-                    </Link>
-
-                    {/* Area User / Tombol Login */}
-                    {/* Area User / Tombol Login */}
-                    <div className="flex items-center gap-2 sm:gap-3">
-                        {user?.role === 'customer' ? (
-                            // Customer sudah login: keranjang + avatar dengan dropdown menu
-                            <>
-                                <CartButton />
-                                <UserMenu />
-                            </>
-                        ) : user ? (
-                            // Admin: tampilan lama dipertahankan (nama, tautan Panel admin, Keluar)
-                            <div className="flex items-center gap-2 sm:gap-3">
-                                <div className="text-right">
-                                    <p className="max-w-[120px] truncate text-xs font-bold text-slate-900 sm:max-w-none sm:text-sm">
-                                        {user.name}
-                                    </p>
-                                    <span className="hidden rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] font-semibold text-indigo-700 capitalize sm:inline-block">
-                                        {user.role}
-                                    </span>
-                                </div>
-                                <Link to="/admin" className="rounded-lg px-2.5 py-1 text-xs font-semibold text-indigo-700 hover:bg-indigo-50 sm:px-3 sm:py-1.5">
-                                    Panel admin
-                                </Link>
-                                <button
-                                    onClick={logout}
-                                    className="rounded-lg border border-rose-200 bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-600 transition-colors hover:bg-rose-100 sm:px-3 sm:py-1.5"
-                                    title="Keluar dari akun"
-                                >
-                                    Keluar
-                                </button>
-                            </div>
-                        ) : (
-                            // Belum login: tombol Masuk (tidak berubah)
-                            <Link
-                                to="/login"
-                                className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm shadow-indigo-100 transition-all hover:bg-indigo-700 active:scale-95 sm:rounded-xl sm:px-5 sm:py-2 sm:text-sm"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
-                                </svg>
-                                <span>Masuk</span>
-                            </Link>
-                        )}
-                    </div>
-                </div>
-            </header>
+            {/* Pengaturan Header Berada di SiteHeader.tsx */}
+            <SiteHeader />
 
             {/* ===================== HERO BANNER (RESPONSIVE) ===================== */}
             <section className="relative overflow-hidden bg-gradient-to-br from-indigo-950 via-slate-900 to-indigo-900 text-white">
@@ -442,16 +375,36 @@ export default function HomePage() {
                         </div>
 
                         <div className="sm:col-span-2 lg:col-span-1">
-                            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900">Bantuan & Akun</h4>
-                            <p className="mt-2 text-xs text-slate-500">
-                                Masuk ke akun Anda untuk melihat rincian spesifikasi handphone, melakukan checkout, dan mengunggah bukti pembayaran.
-                            </p>
-                            <Link
-                                to="/login"
-                                className="mt-2.5 inline-block text-xs font-semibold text-indigo-600 hover:underline"
-                            >
-                                Sudah punya akun? Masuk di sini →
-                            </Link>
+                            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900">
+                                {user ? 'Akun Saya' : 'Bantuan & Akun'}
+                            </h4>
+
+                            {user ? (
+                                <ul className="mt-2 space-y-1.5 text-xs">
+                                    <li>
+                                        <Link to="/orders" className="font-semibold text-indigo-600 hover:underline">
+                                            Pesanan Saya
+                                        </Link>
+                                    </li>
+                                    <li>
+                                        <Link to="/profile" className="font-semibold text-indigo-600 hover:underline">
+                                            Edit Profil
+                                        </Link>
+                                    </li>
+                                </ul>
+                            ) : (
+                                <>
+                                    <p className="mt-2 text-xs text-slate-500">
+                                        Masuk ke akun Anda untuk melihat rincian spesifikasi handphone, melakukan checkout, dan mengunggah bukti pembayaran.
+                                    </p>
+                                    <Link
+                                        to="/login"
+                                        className="mt-2.5 inline-block text-xs font-semibold text-indigo-600 hover:underline"
+                                    >
+                                        Sudah punya akun? Masuk di sini →
+                                    </Link>
+                                </>
+                            )}
                         </div>
                     </div>
 
