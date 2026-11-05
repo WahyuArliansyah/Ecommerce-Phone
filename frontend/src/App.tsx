@@ -7,112 +7,125 @@ import LoginPage from './pages/LoginPage';
 import AdminLayout from './pages/admin/AdminLayout';
 import AdminProductsPage from './pages/admin/AdminProductsPage';
 import AdminOrdersPage from './pages/admin/AdminOrdersPage';
-import ProfilePage from './pages/ProfilePage';
 import ProductDetailPage from './pages/customer/ProductDetailPage';
 import CartPage from './pages/customer/CartPage';
 import CheckoutPage from './pages/customer/CheckoutPage';
 import OrderDetailPage from './pages/customer/OrderDetailPage';
 import MyOrdersPage from './pages/customer/MyOrdersPage';
 import GuestOnly from './components/GuestOnly';
+import RegisterPage from './pages/customer/RegisterPage';
+import { ToastProvider } from './context/ToastContext';
+import ProfilePage from './pages/customer/ProfilePage';
+import ErrorBoundary from './context/ErrorBoundary';
 
 export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <Routes>
-          {/* Halaman untuk pengunjung dan user (admin dialihkan ke panel admin) */}
-          <Route
-            path="/"
-            element={
-              <AdminHomeRedirect>
-                <HomePage />
-              </AdminHomeRedirect>
-            }
-          />
+        <ToastProvider>
+          <ErrorBoundary>
+            <Routes>
+              {/* Halaman untuk pengunjung dan user (admin dialihkan ke panel admin) */}
+              <Route
+                path="/"
+                element={
+                  <AdminHomeRedirect>
+                    <HomePage />
+                  </AdminHomeRedirect>
+                }
+              />
 
-          {/* route halaman login yang di protect dengan guest only agar tidak bisa login jika sudah login */}
-          <Route
-            path="/login"
-            element={
-              <GuestOnly>
-                <LoginPage />
-              </GuestOnly>
-            }
-          />
+              {/* route halaman login yang di protect dengan guest only agar tidak bisa login jika sudah login */}
+              <Route
+                path="/login"
+                element={
+                  <GuestOnly>
+                    <LoginPage />
+                  </GuestOnly>
+                }
+              />
 
-          {/* Halaman admin: hanya role "admin" */}
-          <Route
-            path="/admin"
-            element={
-              <RequireRole role="admin">
-                <AdminLayout />
-              </RequireRole>
-            }
-          >
-            <Route index element={<Navigate to="products" replace />} />
-            <Route path="products" element={<AdminProductsPage />} />
-            <Route path="orders" element={<AdminOrdersPage />} />
-          </Route>
-          {/* route ke halaman profile user */}
-          <Route
-            path="/profile"
-            element={
-              <RequireRole role="customer">
-                <ProfilePage />
-              </RequireRole>
-            }
-          />
+              {/* Halaman admin: hanya role "admin" */}
+              <Route
+                path="/admin"
+                element={
+                  <RequireRole role="admin">
+                    <AdminLayout />
+                  </RequireRole>
+                }
+              >
+                <Route index element={<Navigate to="products" replace />} />
+                <Route path="products" element={<AdminProductsPage />} />
+                <Route path="orders" element={<AdminOrdersPage />} />
+              </Route>
+              {/* route ke halaman profile user */}
+              <Route
+                path="/profile"
+                element={
+                  <RequireRole role="customer">
+                    <ProfilePage />
+                  </RequireRole>
+                }
+              />
 
-          {/* route ke halaman detail produk user */}
-          <Route
-            path="/products/:id"
-            element={
-              <RequireRole role="customer">
-                <ProductDetailPage />
-              </RequireRole>
-            }
-          />
+              {/* route ke halaman detail produk user */}
+              <Route
+                path="/products/:id"
+                element={
+                  <RequireRole role="customer">
+                    <ProductDetailPage />
+                  </RequireRole>
+                }
+              />
 
-          {/* route ke halaman keranjang user */}
-          <Route
-            path="/cart"
-            element={
-              <RequireRole role="customer">
-                <CartPage />
-              </RequireRole>
-            }
-          />
+              {/* route ke halaman keranjang user */}
+              <Route
+                path="/cart"
+                element={
+                  <RequireRole role="customer">
+                    <CartPage />
+                  </RequireRole>
+                }
+              />
 
-          {/* route ke halaman checkout */}
-          <Route
-            path="/checkout"
-            element={
-              <RequireRole role="customer">
-                <CheckoutPage />
-              </RequireRole>
-            }
-          />
+              {/* route ke halaman checkout */}
+              <Route
+                path="/checkout"
+                element={
+                  <RequireRole role="customer">
+                    <CheckoutPage />
+                  </RequireRole>
+                }
+              />
 
-          {/* route ke halaman orders */}
-          <Route
-            path="/orders"
-            element={
-              <RequireRole role="customer">
-                <MyOrdersPage />
-              </RequireRole>
-            }
-          />
+              {/* route ke halaman orders */}
+              <Route
+                path="/orders"
+                element={
+                  <RequireRole role="customer">
+                    <MyOrdersPage />
+                  </RequireRole>
+                }
+              />
 
-          {/* route ke halaman order detail user */}
-          <Route
-            path="/orders/:id"
-            element={
-              <RequireRole role="customer">
-                <OrderDetailPage />
-              </RequireRole>
-            }
-          />
-        </Routes>
+              {/* route ke halaman order detail user */}
+              <Route
+                path="/orders/:id"
+                element={
+                  <RequireRole role="customer">
+                    <OrderDetailPage />
+                  </RequireRole>
+                }
+              />
+
+              {/* router ke page register */}
+              <Route
+                path='register'
+                element={<RegisterPage />}
+              />
+            </Routes>
+          </ErrorBoundary>
+        </ToastProvider>
       </AuthProvider>
     </BrowserRouter>
   );

@@ -227,7 +227,7 @@ export default function LoginPage() {
 
             {/* ── Tautan daftar ── */}
             <p className="mt-8 text-sm text-[#5A6472]">
-              Belum punya akun?{' '}
+              Belum punya akun?{''}
               <Link
                 to="/register"
                 className="rounded font-semibold text-[#086872] underline underline-offset-4 hover:text-[#131820] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[#0A7C86]/50"

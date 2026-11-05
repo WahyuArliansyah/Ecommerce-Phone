@@ -145,7 +145,7 @@ export default function HomePage() {
                         {/* Kolom Kiri: Teks Promosi */}
                         <div className="text-center lg:col-span-7 lg:text-left">
                             <span className="inline-flex items-center gap-1.5 rounded-full border border-indigo-400/30 bg-indigo-500/20 px-3 py-1 text-xs font-semibold text-indigo-300">
-                                🚀 Toko Handphone Terpercaya
+                                Toko Handphone Terpercaya
                             </span>
                             <h1 className="mt-3 text-2xl font-extrabold tracking-tight sm:text-4xl lg:text-5xl">
                                 Temukan Smartphone Impian dengan Garansi Resmi & Harga Terbaik

@@ -14,7 +14,7 @@ interface OrderRow {
 }
 
 const itemClass =
-  'flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 focus-visible:bg-slate-100 focus-visible:outline-none';
+  'cursor-pointer flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 focus-visible:bg-slate-100 focus-visible:outline-none';
 
 export default function UserMenu() {
   const { user, logout, syncing } = useAuth();
@@ -82,7 +82,7 @@ export default function UserMenu() {
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label="Menu akun"
-        className="relative flex h-10 w-10 items-center justify-center rounded-full transition-shadow hover:ring-2 hover:ring-indigo-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+        className="cursor-pointer relative flex h-10 w-10 items-center justify-center rounded-full transition-shadow hover:ring-2 hover:ring-indigo-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
       >
         <UserAvatar user={user} className="h-9 w-9" />
         {showDot && (
@@ -101,7 +101,7 @@ export default function UserMenu() {
         <div
           role="menu"
           aria-label="Menu akun"
-          className="absolute right-0 z-50 mt-2 w-64 rounded-xl border border-slate-200 bg-white p-1.5 shadow-lg"
+          className="cursor-pointer absolute right-0 z-50 mt-2 w-64 rounded-xl border border-slate-200 bg-white p-1.5 shadow-lg"
         >
           <div className="px-3 pb-2 pt-2">
             <p className="truncate text-sm font-bold text-slate-900">{user.name}</p>

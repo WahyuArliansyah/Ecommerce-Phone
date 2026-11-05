@@ -139,14 +139,14 @@ export default function ChangePasswordDialog({ onClose }: { onClose: () => void 
                 type="button"
                 onClick={() => ref.current?.close()}
                 disabled={saving}
-                className="h-11 rounded-lg border border-slate-300 px-5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 disabled:opacity-60"
+                className="cursor-pointer h-11 rounded-lg border border-slate-300 px-5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 disabled:opacity-60"
               >
                 Batal
               </button>
               <button
                 type="submit"
                 disabled={saving}
-                className="h-11 rounded-lg bg-indigo-600 px-5 text-sm font-semibold text-white transition-colors hover:bg-indigo-700 disabled:opacity-60"
+                className="cursor-pointer h-11 rounded-lg bg-indigo-600 px-5 text-sm font-semibold text-white transition-colors hover:bg-indigo-700 disabled:opacity-60"
               >
                 {saving ? 'Menyimpan…' : 'Simpan password'}
               </button>
