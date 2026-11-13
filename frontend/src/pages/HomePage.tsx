@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
@@ -110,6 +110,54 @@ const ArrowIcon = ({ size = 16 }: { size?: number }) => (
     </svg>
 );
 
+// Membungkus elemen agar muncul halus (fade + naik) saat masuk ke layar ketika di-scroll.
+// Otomatis dimatikan bagi pengguna yang mengaktifkan "reduce motion" di perangkatnya.
+function Reveal({
+    children,
+    delay = 0,
+    className = '',
+}: {
+    children: ReactNode;
+    delay?: number;
+    className?: string;
+}) {
+    const ref = useRef<HTMLDivElement>(null);
+    const [visible, setVisible] = useState(false);
+
+    useEffect(() => {
+        const el = ref.current;
+        if (!el) return;
+
+        const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (reduceMotion || typeof IntersectionObserver === 'undefined') {
+            setVisible(true);
+            return;
+        }
+
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                if (entry.isIntersecting) {
+                    setVisible(true);
+                    observer.disconnect(); // animasi hanya sekali per elemen
+                }
+            },
+            { threshold: 0.12, rootMargin: '0px 0px -6% 0px' },
+        );
+        observer.observe(el);
+        return () => observer.disconnect();
+    }, []);
+
+    return (
+        <div
+            ref={ref}
+            style={{ transitionDelay: `${delay}ms` }}
+            className={`${className} transition-[opacity,transform] duration-700 ease-out motion-reduce:transition-none ${visible ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0'}`}
+        >
+            {children}
+        </div>
+    );
+}
+
 export default function HomePage() {
     // 1. Hook auth untuk memeriksa status login pengguna
     const { user } = useAuth();
@@ -169,7 +217,7 @@ export default function HomePage() {
     const filteredProducts = products.filter((item) => matchBrand(item, selectedBrand));
     const countOf = (brand: string) => products.filter((item) => matchBrand(item, brand)).length;
 
-    // 7. Produk terbaru di hero: produk pertama yang masih ada stok, atau data contoh
+    // 7. Produk unggulan di hero: produk pertama yang masih ada stok, atau data contoh
     const spotlight =
         products.find((p) => (p.total_stock ?? 0) > 0) ?? products[0] ?? SPOTLIGHT_FALLBACK;
 
@@ -211,7 +259,7 @@ export default function HomePage() {
                             </div>
                         </div>
 
-                        {/* Kanan: produk terbaru, sejajar vertikal dengan teks di dalam hero */}
+                        {/* Kanan: produk unggulan, sejajar vertikal dengan teks di dalam hero */}
                         <div className="w-full max-w-sm justify-self-center lg:col-span-5 lg:justify-self-end">
                             <div className="rounded-3xl bg-white p-4 shadow-[0_20px_50px_-12px_rgba(19,24,32,0.55)] ring-1 ring-white/20 sm:p-5">
                                 <div className="relative rounded-2xl bg-[#EEF0EB]">
@@ -221,7 +269,7 @@ export default function HomePage() {
                                         className="h-48 w-full object-contain p-5 sm:h-52"
                                     />
                                     <span className="absolute left-3 top-3 rounded-full bg-[#131820] px-2.5 py-1 text-xs font-semibold text-white">
-                                        Terbaru 
+                                        Unggulan
                                     </span>
                                 </div>
 
@@ -263,7 +311,7 @@ export default function HomePage() {
 
             {/* ===================== KEUNGGULAN TOKO ===================== */}
                         <section aria-label="Keunggulan toko" className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:py-10">
-                <div>
+                <Reveal>
                     <ul className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-4">
                         {TRUST_POINTS.map((point) => (
                             <li
@@ -280,12 +328,12 @@ export default function HomePage() {
                             </li>
                         ))}
                     </ul>
-                </div>
+                </Reveal>
             </section>
 
             {/* ===================== KATALOG ===================== */}
             <main id="katalog" className="mx-auto max-w-7xl scroll-mt-6 px-4 pb-16 pt-8 sm:px-6 sm:pb-24 lg:pt-12">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                <Reveal className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                     <div>
                         <h2 className="text-3xl font-extrabold leading-tight tracking-[-0.03em] sm:text-4xl">
                             Katalog smartphone
@@ -301,11 +349,11 @@ export default function HomePage() {
                             Menampilkan {filteredProducts.length} dari {products.length} ponsel
                         </p>
                     )}
-                </div>
+                </Reveal>
 
                 {/* Filter merek: tab bergaris bawah, bisa digeser di HP */}
                 {(loading || products.length > 0) && (
-                <div className="-mx-4 mt-8 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+                <Reveal delay={100} className="-mx-4 mt-8 overflow-x-auto px-4 sm:mx-0 sm:px-0">
                     <div className="flex min-w-max gap-5 border-b border-[#8A93A0]/40 sm:gap-7">
                         {brands.map((brand) => {
                             const active = selectedBrand === brand;
@@ -330,7 +378,7 @@ export default function HomePage() {
                             );
                         })}
                     </div>
-                </div>
+                </Reveal>
                 )}
 
                 {/* ===================== DAFTAR PRODUK ===================== */}
@@ -375,10 +423,11 @@ export default function HomePage() {
                     </div>
                 ) : (
                     <ul className="mt-8 grid grid-cols-2 gap-x-3 gap-y-8 sm:gap-x-5 md:grid-cols-3 lg:grid-cols-4 lg:gap-x-6 lg:gap-y-12">
-                        {filteredProducts.map((phone) => {
+                        {filteredProducts.map((phone, index) => {
                             const inStock = (phone.total_stock ?? 0) > 0;
                             return (
                                 <li key={phone.id}>
+                                    <Reveal delay={(index % 4) * 80}>
                                     <button
                                         type="button"
                                         onClick={() => handleViewDetail(phone.id)}
@@ -426,6 +475,7 @@ export default function HomePage() {
                                             </span>
                                         </span>
                                     </button>
+                                    </Reveal>
                                 </li>
                             );
                         })}
@@ -437,13 +487,16 @@ export default function HomePage() {
             <section id="cara-belanja" className="scroll-mt-6 bg-[#131820] text-white">
                 <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-20">
                     <div className="grid grid-cols-1 gap-10 lg:grid-cols-12 lg:gap-12">
-                        <h2 className="max-w-[14ch] text-3xl font-extrabold leading-[1.05] tracking-[-0.035em] sm:text-4xl lg:col-span-4 lg:text-5xl">
-                            Tiga langkah sampai ponsel di tangan.
-                        </h2>
+                        <Reveal className="lg:col-span-4">
+                            <h2 className="max-w-[14ch] text-3xl font-extrabold leading-[1.05] tracking-[-0.035em] sm:text-4xl lg:text-5xl">
+                                Tiga langkah sampai ponsel di tangan.
+                            </h2>
+                        </Reveal>
 
                         <ol className="divide-y divide-white/15 border-y border-white/15 lg:col-span-8">
                             {STEPS.map((step, i) => (
-                                <li key={step.title} className="grid grid-cols-[2.5rem_1fr] gap-x-4 py-6 sm:grid-cols-[4.5rem_1fr] sm:py-8">
+                                <li key={step.title} className="py-6 sm:py-8">
+                                    <Reveal delay={i * 120} className="grid grid-cols-[2.5rem_1fr] gap-x-4 sm:grid-cols-[4.5rem_1fr]">
                                     <span className="text-3xl font-extrabold leading-none tracking-[-0.03em] text-[#3FB6C1] sm:text-5xl">
                                         {i + 1}
                                     </span>
@@ -451,6 +504,7 @@ export default function HomePage() {
                                         <h3 className="text-lg font-bold sm:text-xl">{step.title}</h3>
                                         <p className="mt-1 max-w-lg text-base leading-normal text-white/70">{step.text}</p>
                                     </div>
+                                    </Reveal>
                                 </li>
                             ))}
                         </ol>
@@ -461,7 +515,7 @@ export default function HomePage() {
             {/* ===================== FOOTER ===================== */}
             <footer className="bg-[#131820] text-white">
                 <div className="mx-auto max-w-7xl border-t border-white/15 px-4 pb-8 pt-10 sm:px-6">
-                    <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-12 lg:gap-12">
+                    <Reveal className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-12 lg:gap-12">
                         <div className="lg:col-span-5">
                             <div className="flex items-center gap-2.5">
                                 <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3FB6C1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -524,7 +578,7 @@ export default function HomePage() {
                                 </>
                             )}
                         </div>
-                    </div>
+                    </Reveal>
 
                     <p className="mt-10 border-t border-white/10 pt-6 text-xs text-white/60">
                         © {new Date().getFullYear()} ArliPhone. Hak cipta dilindungi.

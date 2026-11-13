@@ -64,7 +64,7 @@ export default function ProfilePage() {
             return;
         }
         if (file.size > MAX_AVATAR_BYTES) {
-            toast.error('Ukuran foto terlalu besar. Pilih foto yang lebih kecil.');
+            toast.error('Ukuran foto terlalu besar. Maksimal 5 MB.');
             return;
         }
         setAvatarBusy(true);
